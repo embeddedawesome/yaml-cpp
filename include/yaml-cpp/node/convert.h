@@ -23,6 +23,7 @@
 #include "yaml-cpp/node/type.h"
 #include "yaml-cpp/null.h"
 
+#include "nlohmann/json.hpp"
 
 namespace YAML {
 class Binary;
@@ -384,6 +385,44 @@ struct convert<Binary> {
       return false;
 
     rhs.swap(data);
+    return true;
+  }
+};
+
+
+// JSON
+template <>
+struct convert<nlohmann::json> {
+  static Node encode(const nlohmann::json& rhs) {
+    return Node(NodeType::Map);
+  }
+
+  static bool decode(const Node& node, nlohmann::json& rhs) {
+    if (node.IsMap())
+    {
+        for (const_iterator it = node.begin(); it != node.end(); ++it)
+        {
+            nlohmann::json n;
+            if (it->second.IsNull() == false)
+            {
+                convert<nlohmann::json>::decode(it->second, n);
+                rhs[it->first.as<std::string>()] = n;
+            }
+        }
+    }
+    else if (node.IsSequence())
+    {
+    	for (const_iterator it = node.begin(); it != node.end(); ++it)
+    	{
+    		nlohmann::json n;
+    		convert<nlohmann::json>::decode(*it, n);
+    		rhs.push_back(n);
+    	}
+    }
+    else
+    {
+    	rhs = nlohmann::json(node.as<std::string>());
+    }
     return true;
   }
 };
