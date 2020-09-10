@@ -334,6 +334,8 @@ inline const Node Node::operator[](const Key& key) const {
 
 template <typename Key>
 inline Node Node::operator[](const Key& key) {
+  if (!m_isValid)
+    return Node(ZombieNode);
   EnsureNodeExists();
   detail::node& value = m_pNode->get(key, m_pMemory);
   return Node(value, m_pMemory);
